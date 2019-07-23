@@ -90,9 +90,12 @@ QSGNode *QPScrollingCurve::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdateP
     QSGGeometry *geometry = 0;
     QSGFlatColorMaterial *material = 0;
 
+    const int allocSize = qMax<int>(1, m_data.size());
+
     if (!oldNode) {
         node = new QSGGeometryNode;
-        geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(), m_data.size());
+        geometry = new QSGGeometry(QSGGeometry::defaultAttributes_Point2D(),
+                                   allocSize);
         geometry->setLineWidth(2);
         geometry->setDrawingMode(GL_LINE_STRIP);
         node->setGeometry(geometry);
@@ -105,7 +108,7 @@ QSGNode *QPScrollingCurve::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdateP
     } else {
         node = static_cast<QSGGeometryNode *>(oldNode);
         geometry = node->geometry();
-        geometry->allocate(m_data.size());
+        geometry->allocate(allocSize);
         material = static_cast<QSGFlatColorMaterial*>(node->material());
         if (material->color() != m_color) {
             material->setColor(m_color);
@@ -114,6 +117,8 @@ QSGNode *QPScrollingCurve::updatePaintNode(QSGNode *oldNode, QQuickItem::UpdateP
     }
 
     QSGGeometry::Point2D *vertices = geometry->vertexDataAsPoint2D();
+    // We allocate at least one vertex; set that to zero.
+    vertices[0].set(0, 0);
 
     for (uint i = 0; i < m_data.size(); ++i) {
         QPointF p(i, m_data[i]);
